@@ -23,30 +23,38 @@ def fetch_ndbnos_list(search_term = None, n = 0):
 	# REQUIRES: search term to avoid prompt
 	# MODIFIES: print to terminal
 
-	if search_term == None:
-		search_term = helper.press_any_key(s ="\nEnter food name? (or 'exit')\n> ", inp = True)
-		# search_term = input("\nEnter food name? (or 'exit')\n> ") TODO remove
-		if search_term.lower() == "exit":
-			return 0
 
 	# Here is the api request URL example:
 	# 1. Explore in Browser https://ndb.nal.usda.gov/ndb/foods/show/9?fgcd=&manu=&lfacet=&format=&count=&max=50&offset=&sort=default&order=asc&qlookup=01009&ds=&qt=&qp=&qa=&qn=&q=&ing=
 	# 2. APIurl				https://api.nal.usda.gov/ndb/search/?format=json&q=butter&sort=n&max=25&offset=0&api_key=DEMO_KEY
 	# 3. Documentation		https://ndb.nal.usda.gov/ndb/doc/apilist/API-SEARCH.md
-	base_url = "https://api.nal.usda.gov/ndb/search/"
-	p = {
-		"format":"json",
-		"q":search_term,
-		"sort":"r",
-		"max":50,
-		"ds":"Standard Reference",
-		"api_key":DATAGOV_APIKEY
-	}
 
-	# making a request with caching to the USDA for a list of products
-	json_data = cached_reqest(base_url,params = p)
-	try: food_ids_list = json_data['list']['item']
-	except:	return None
+
+	food_ids_list = False
+	while not food_ids_list:
+		if search_term == None:
+			search_term = helper.press_any_key(s ="\nEnter food name? (or 'back' for main menu)\n> ", inp = True)
+			# search_term = input("\nEnter food name? (or 'exit')\n> ") TODO remove
+			if search_term.lower() == "back":
+				return None
+
+		# making a request with caching to the USDA for a list of products
+		base_url = "https://api.nal.usda.gov/ndb/search/"
+		p = {
+			"format":"json",
+			"q":search_term,
+			"sort":"r",
+			"max":50,
+			"ds":"Standard Reference",
+			"api_key":DATAGOV_APIKEY
+		}
+		json_data = cached_reqest(base_url,params = p)
+		try: 
+			food_ids_list = json_data['list']['item']
+			break
+		except:	
+			helper.print_with_line(texts.not_found, ref = False)
+			return None
 
 
 	# loop while user hasn't made the right choice  (exit, next, correct number)
@@ -94,7 +102,7 @@ def fetch_ndbnos_list(search_term = None, n = 0):
 				chosen_food = food_ids_list[int(food_number) - 1]
 				break
 		except:
-			helper.print_with_line(texts.invalid.format(fn = food_number), ref = None)
+			helper.print_with_line(texts.invalid.format(food_number), ref = None)
 	if more:
 		while True:
 			try:
@@ -110,7 +118,7 @@ def fetch_ndbnos_list(search_term = None, n = 0):
 					chosen_food = food_ids_list[int(food_number) - 1]
 					break
 			except:
-				helper.print_with_line(texts.invalid.format(fn = food_number), ref = None)
+				helper.print_with_line(texts.invalid.format(food_number), ref = None)
 
 
 	# if user enters exit - return 'exit' 
@@ -151,6 +159,8 @@ def fetch_nutrition(ndbno):
 
 	# blank dictonary to hold values of interest
 	data = blank_nutri_map
+	print(json_data)
+
 
 	# saving nutri name and ndbno into the dict
 	data['name'] = json_data['foods'][0]['food']['desc']['name']
@@ -159,7 +169,7 @@ def fetch_nutrition(ndbno):
 
 	# extracting the values of interest from the JSON data
 	for nutrient in json_data['foods'][0]['food']['nutrients']:
-		nutri_id 	= nutrient['nutrient_id']
+		nutri_id = int(nutrient['nutrient_id'])
 		data[nutri_id] = {
 			"name": nutrient['name'],
 			"unit": nutrient['unit'],
@@ -188,23 +198,23 @@ def nutri_index(data):
 
 	# extracting necessary data for calculating HLTH_IDX
 	name 	= data['name'].split(" ")[0].replace(",","")
-	kcal 	= data['kcal']
+	# kcal 	= data['kcal']
 
-	kcal	= data['208']['value'] if data['208']['value'] else 0.101
-	protein	= data['203']['value']
-	carbs	= data['205']['value']
-	fiber	= data['291']['value']
-	fiber	= data['291']['value']
-	sugar	= data['269']['value']
-	sat_f	= data['606']['value']
-	trans_f = data['605']['value']
-	pol_f 	= data['646']['value']
-	mon_f 	= data['645']['value']
-	vit_c	= data['401']['value']
-	vit_a	= data['318']['value']
-	vit_k	= data['430']['value']
-	vit_d	= data['324']['value']
-	sodium	= data['307']['value']
+	kcal	= data[208]['value'] if data[208]['value'] else 0.101
+	protein	= data[203]['value']
+	carbs	= data[205]['value']
+	fiber	= data[291]['value']
+	fiber	= data[291]['value']
+	sugar	= data[269]['value']
+	sat_f	= data[606]['value']
+	trans_f = data[605]['value']
+	pol_f 	= data[646]['value']
+	mon_f 	= data[645]['value']
+	vit_c	= data[401]['value']
+	vit_a	= data[318]['value']
+	vit_k	= data[430]['value']
+	vit_d	= data[324]['value']
+	sodium	= data[307]['value']
 
 	# GOOD STUFF
 	good_fats		= (pol_f*8 + mon_f*4)
@@ -214,7 +224,7 @@ def nutri_index(data):
 	# BAD STUFF
 	bad_fats		= (sat_f*16 + trans_f*400)
 	bad_sodium 		= (sodium-2)/2
-	bad_sugar 		= (sugar*20 - fiber*100)
+	bad_sugar 		= (sugar*10 - fiber*100)
 
 
 	# my proprietary formula for calculating HLTH IDX
@@ -235,18 +245,18 @@ def nutri_index(data):
 
 	# test outputs
 	if DEBUG == True:
-		carbs_unit		= data['205']['unit']
-		fiber_unit		= data['291']['unit']
-		sugar_unit		= data['269']['unit']
-		sat_f_unit		= data['606']['unit']
-		trans_f_unit	= data['605']['unit']
-		pol_f_unit		= data['646']['unit']
-		mon_f_unit		= data['645']['unit']
-		vit_a_unit		= data['318']['unit']
-		vit_c_unit		= data['401']['unit']
-		vit_d_unit		= data['324']['unit']
-		vit_k_unit		= data['430']['unit']
-		sodium_unit		= data['307']['unit']
+		carbs_unit		= data[205]['unit']
+		fiber_unit		= data[291]['unit']
+		sugar_unit		= data[269]['unit']
+		sat_f_unit		= data[606]['unit']
+		trans_f_unit	= data[605]['unit']
+		pol_f_unit		= data[646]['unit']
+		mon_f_unit		= data[645]['unit']
+		vit_a_unit		= data[318]['unit']
+		vit_c_unit		= data[401]['unit']
+		vit_d_unit		= data[324]['unit']
+		vit_k_unit		= data[430]['unit']
+		sodium_unit		= data[307]['unit']
 
 		print('''
 			"name":		{}
@@ -264,7 +274,22 @@ def nutri_index(data):
 			"vit_d":	{}
 			"vit_k":	{}
 			"sodium":	{}
-			'''.format(name,kcal,protein,str(carbs) + carbs_unit ,str(fiber) + fiber_unit ,str(sugar) + sugar_unit ,str(sat_f) + sat_f_unit ,str(trans_f) + trans_f_unit ,str(pol_f) + pol_f_unit ,str(mon_f) + mon_f_unit ,str(vit_c) + vit_c_unit ,str(vit_a) + vit_a_unit ,str(vit_d) + vit_d_unit ,str(vit_k) + vit_k_unit ,str(sodium) + sodium_unit) )
+			'''.format(		name,
+							protein,
+							kcal,
+							str(carbs) + carbs_unit,
+							str(fiber) + fiber_unit ,
+							str(sugar) + sugar_unit ,
+							str(sat_f) + sat_f_unit ,
+							str(trans_f) + trans_f_unit ,
+							str(pol_f) + pol_f_unit ,
+							str(mon_f) + mon_f_unit ,
+							str(vit_c) + vit_c_unit ,
+							str(vit_a) + vit_a_unit ,
+							str(vit_d) + vit_d_unit ,
+							str(vit_k) + vit_k_unit ,
+							str(sodium) + sodium_unit) 
+			)
 
 		print('''
 		hlth_idx_good_fats:	{}
@@ -273,7 +298,13 @@ def nutri_index(data):
 		hlth_idx_bad_fats:	{}
 		hlth_idx_bad_sodiu:	{}
 		hlth_idx_bad_sugar:	{}
-			'''.format(good_fats,good_vitamins,good_protein,bad_fats ,bad_sodium ,bad_sugar) )
+			'''.format(	good_fats,
+						good_protein,
+						good_vitamins,
+						bad_fats,
+						bad_sodium,
+						bad_sugar) 
+			)
 
 	# returning the health index in percent
 	return hlth_idx * 100

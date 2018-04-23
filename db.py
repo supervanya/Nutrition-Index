@@ -1,5 +1,17 @@
 import sqlite3
 import maps
+import helper
+import table
+
+DEBUG = False
+
+def encrypt(string):
+    encrypted_str = ''.join([chr(ord(l)+128) for l in string])
+    return(encrypted_str)
+
+def decrypt(string):
+    decrypted_str = ''.join([chr(ord(l)-128) for l in string])
+    return(decrypted_str)
 
 def create_db():
     '''
@@ -244,8 +256,11 @@ def save_food(data):
     conn = connect_db()
     cur = conn.cursor()
 
+    if DEBUG == True:
+        print(list(data))
+
     ids = list(data.keys())
-    first_cols   = [data["ndbno"], data["name"], data["health_index"]]
+    first_cols      = [data["ndbno"], data["name"], data["health_index"]]
     nutri_values    = [data[id]['value'] for id in ids if (id not in ids[-4:])]
     insertion       = first_cols + nutri_values
     # this will make ?,?,?...as many as provided
@@ -254,22 +269,44 @@ def save_food(data):
     sql_insert = ''' 
         INSERT INTO "Foods"
         VALUES({}) '''.format(value_markers)
-    cur.execute(sql_insert, insertion)
+    try:
+        cur.execute(sql_insert, insertion)
+        conn.commit()
+        if DEBUG == True:
+            print("\LOGGED!")
+    except Exception as e:
+        if DEBUG == True:
+            print(e, "\nfood already exist")
 
-    conn.commit()
     conn.close()
 
     return cur.lastrowid
 
-def log_food(data, user_id):
+def save_log(user_id, ndbno):
+    '''
+    writes the food entree to the 'log' table of database 
+    '''
+    conn = connect_db()
+    cur = conn.cursor()
+
+    insertion = (user_id, ndbno)
+    sql_insert = ''' 
+        INSERT INTO "Logs"
+        VALUES(?,?,date('now')) '''
+
+    cur.execute(sql_insert, insertion)
+    conn.commit()
+    helper.print_with_line("Food logged!",title="Success!", n = 0, ref = True)
+    helper.pause()
+    conn.close()   
+
+def log_food(data, user_id, skip_log = False):
     '''
     DESCRIP: logs food to the database for user_id
     RETURNS: nothing
     REQUIRS: nutri_data dictionary, valid user_id
     MODIFIS: db table 'Logs'
     '''
-
-    # TODO: get a way to get a USERName from ID
 
     # 1. Check if food item already in db
     ndbno = data["ndbno"]
@@ -284,21 +321,16 @@ def log_food(data, user_id):
 
     # db will return None if id doens't exist
     nbdno_exists = cur.fetchone()
+    conn.close()   
 
     # if ndbno not in db already - add it
     if not nbdno_exists: 
         save_food(data)
 
-
-    # 2. Logging the food item to the Logs table
-    insertion = (user_id, ndbno)
-    sql_insert = ''' 
-        INSERT INTO "Logs"
-        VALUES(?,?,date('now')) '''
-
-    cur.execute(sql_insert, insertion)
-    conn.commit()
-    conn.close()
+    # 2. Logging the food item to the 'Logs' table 
+    #                   if skip_log == True
+    if not skip_log:
+        save_log(user_id, ndbno)
 
 def create_user(user_name, gender, age, password):
     '''
@@ -307,6 +339,9 @@ def create_user(user_name, gender, age, password):
     REQUIRS: name: str, gender: M or F, age: int, password: str
     MODIFIS: db table 'Users'
     '''
+
+    password = encrypt(password)
+
     if gender.lower() in ['male','mal','macho','ma','m','manlike','man','manly','boy','musculan','b']:
         gender = "M"
     else:
@@ -334,6 +369,18 @@ def get_user_id(user_name):
     conn.close()
     return user_id[0]
 
+def get_user_name(user_id):
+    password_q = ''' 
+        SELECT Name
+        FROM Users as u
+        WHERE UserId = "{}" 
+        LIMIT 1'''.format(user_id)
+
+    conn    = connect_db()
+    cur     = conn.execute(password_q).fetchone()
+    conn.close()
+    return cur
+
 def fetch_password(user_name):
     password_q = ''' 
         SELECT Password
@@ -346,30 +393,18 @@ def fetch_password(user_name):
     conn.close()
     return cur
 
-def fetch_nutrient(user_id, nutrients = ['Index'], date = False):
+def fetch_nutrient(user_id, nutrients = ['Index'], date = None, limit = None, printing = False):
     # returns health index by default
-    # name    = data['name'].split(" ")[0].replace(",","")
-    # kcal    = data['kcal']
+    # foods with fields Nutrients must be in a list, that can include NDBNO
+    # limit is unlimited by default, 
 
-    # kcal    = data['208']['value'] if data['208']['value'] else 0.101
-    # carbs   = data['205']['value']
-    # fiber   = data['291']['value']
-    # sugar   = data['269']['value']
-    # sat_f   = data['606']['value']
-    # trans_f = data['605']['value']
-    # pol_f   = data['646']['value']
-    # mon_f   = data['645']['value']
-    # vit_c   = data['401']['value']
-    # vit_a   = data['318']['value']
-    # vit_k   = data['430']['value']
-    # vit_d   = data['324']['value']
-    # sodium  = data['307']['value']
+    if limit == None:
+        limit = ""
+    else:
+        limit = 'LIMIT {}'.format(limit)
 
-        # SELECT f.'269'
-        # FROM Logs as l
-        # JOIN Foods as f
-        #     ON l.ndbno = f.ndbno
-        # WHERE UserId = '5'
+    if date == None:
+        date == ""
 
     select_list = []
     select_string = ""
@@ -382,12 +417,20 @@ def fetch_nutrient(user_id, nutrients = ['Index'], date = False):
         JOIN Foods as f
             ON l.ndbno = f.ndbno
         WHERE UserId = "{}"
-        '''.format(select_string[:-1],user_id)
+        ORDER BY l.Date DESC
+        {}
+        '''.format(select_string[:-1],user_id,limit)
 
     conn    = connect_db()
-    cur     = conn.execute(password_q).fetchall()
+    cur     = conn.execute(password_q)
+    tuples  = conn.execute(password_q).fetchall()
+
+    if printing:
+        table.draw(cur)
+
     conn.close()
-    return cur
+    return tuples
+
 
 
 if __name__=="__main__":
@@ -577,7 +620,14 @@ if __name__=="__main__":
      'name': 'Beverages, NESTLE, Boost plus, nutritional drink, ready-to-drink',
      'ndbno': '14041'}
 
-    conn = connect_db()
-    # create_db()
-    create_user('Vanya', 'M', 24, 'SI206')
-    # log_food(data,17)
+    # while True:
+    #     passw = input("> ")
+    #     passw_e = encrypt(passw)
+    #     passw_d = decrypt(passw_e)
+    #     print("encrypted: {} decryted: {}".format(passw_e,passw_d))
+
+
+    while True:
+        idi = input("> ")
+        fetch_nutrient(user_id = idi, nutrients = ['ndbno','name'],limit = 15, printing = True)
+

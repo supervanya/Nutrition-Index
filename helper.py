@@ -1,23 +1,39 @@
 import textwrap
 import time
 
+# HELPER FUNCTIONS | Call them by helper.('fn-name')
+# pause(n)              - freezes the program for n seconds
+# refresh(n, title)     - refreshes the screen. params not required: 
+#                                  n        - how many lines. 
+#                                  title    - what to print in the box
+# press_any_key()       - allows to pause for user to read
+
 WIDTH = 64
 PADDING = 8
 REFRESH = 50
 DELAY = 0.03
+# DELAY = 0.03 original
+PAUSE = 1.3
+# PAUSE = 1 original
 
-def pause(t = 1):
+
+
+def print_menu(text, title="FOOD HEALTH ESTIMATOR v.0.21",response = True):
+    # prints the menu
+    print_with_line(text, ref=True, n=0, title=title)
+    # get and returns the response
+    if response:
+        answer = press_any_key(s ="Enter your choice\n> ", inp = True)
+        return(answer)
+
+
+
+
+def pause(t = PAUSE):
     time.sleep(t)
 
-def draw_top(n = WIDTH):
-    print("{}{}{}".format("┌","─"*(WIDTH-2),"┐" ))
-
-def draw_bottom(n = WIDTH):
-    print("{}{}{}".format("└","─"*(WIDTH-2),"┘" ))
-
-
 def refresh(n=REFRESH, title = "FOOD HEALTH ESTIMATOR v.0.21"):
-    title = "  "+title+"  "
+    title = "  "+str(title)+"  "
 
     title_width = len(title)
     left_n = int((WIDTH - (title_width + 4) )/2) # first_side_width
@@ -25,18 +41,12 @@ def refresh(n=REFRESH, title = "FOOD HEALTH ESTIMATOR v.0.21"):
 
     print("\n" * n)
     print(" {}┌{}┐{}".format(left_n*" ",title_width*"─",right_n*" "))
-    time.sleep(DELAY)
+    pause(DELAY)
     print("┌{}│{}│{}┐".format(left_n*"─",title,right_n*"─"))
-    time.sleep(DELAY)
+    pause(DELAY)
     print("│{}└{}┘{}│".format(left_n*" ",title_width*"─",right_n*" "))
         
 
-
-def wrap(string, width = WIDTH):
-    adjusted_w = WIDTH - PADDING
-    shortened = textwrap.shorten(text=string, width=adjusted_w)
-    shortened_wrapped = textwrap.fill(text=shortened)
-    return shortened_wrapped
 
 
 def print_with_line(string, width = WIDTH, ref = True, n = REFRESH, title = "FOOD HEALTH ESTIMATOR v.0.21"):
@@ -56,8 +66,18 @@ def print_with_line(string, width = WIDTH, ref = True, n = REFRESH, title = "FOO
     return
 
 
+def wrap(string, width = WIDTH):
+    adjusted_w = WIDTH - PADDING
+    shortened = textwrap.shorten(text=string, width=adjusted_w)
+    shortened_wrapped = textwrap.fill(text=shortened)
+    return shortened_wrapped
 
-def print_frame(string_split_final, width = WIDTH, ref = True, title = "FOOD HEALTH ESTIMATOR v.0.21", n = REFRESH):
+
+def print_frame(string_split_final, 
+                width = WIDTH, 
+                ref = True, 
+                title = "FOOD HEALTH ESTIMATOR v.0.21", 
+                n = REFRESH):
     refresh(title = title, n = n) if ref else draw_top()
     # │        Hi there! Welcome to the food health estimator!        │
 
@@ -70,19 +90,27 @@ def print_frame(string_split_final, width = WIDTH, ref = True, title = "FOOD HEA
         right_pad       = whitespace - left_pad
         total_len       = len(line)+left_pad+right_pad+2
         print("│{}{}{}│".format(left_pad*" ",line,right_pad*" ") )
-        time.sleep(DELAY)
+        pause(DELAY)
 
     draw_bottom()
+
+
+def draw_top(n = WIDTH):
+    print("{}{}{}".format("┌","─"*(WIDTH-2),"┐" ))
+
+def draw_bottom(n = WIDTH):
+    print("{}{}{}".format("└","─"*(WIDTH-2),"┘" ))
+
 
 def simple_print(string):
     for line in string.split('\n'):
         print(line)
-        time.sleep(DELAY)
+        pause(DELAY)
 
-def press_any_key(s="\n...Press ENTER to continue!\n", inp = True):
+def press_any_key(s="...Press ENTER to continue!\n", inp = True, n=DELAY):
     for i in s:
         print(i, end = "", flush = True)
-        time.sleep(DELAY)
+        pause(n)
     if inp:
         user_in = input("")
         return user_in

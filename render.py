@@ -1,5 +1,6 @@
 import plotly.plotly as py
 import plotly.graph_objs as go
+import plotly.offline as ply
 from maps import *
 
 def covert_to_macro_dict(data):
@@ -26,22 +27,6 @@ def pie_chart(dictonary):
 	# py.plot(fig, filename='grouped-bar')
 
 def bar_graph(data, name = "Vizualization of Health"):
-# [(842.5430612244897, '2018-04-17'), (842.5430612244897, '2018-04-17'), (183.61142026578074, '2018-04-17'), (677.7281832298138, '2018-04-17')]
-	
-	# print(data)
-	# print([ x[1] for x in data ])
-	# print([ y[0] for y in data ])
-	# data = [go.Bar(
-	#             x=[ x[1] for x in data ],
-	#             y=[ y[0] for y in data ]
-	#     	)]
-
-	# y = [ y[1][1]+str(y[0]) for y in enumerate(data) ]
-	# print(y)
-
-	# for each item in list_
-	# calculate each day separately
-
 	trace1 = go.Bar(
 	    y=[ a[0] for a in data ],
 	    x=[ a[1][1]+str(a[0]) for a in enumerate(data) ],
@@ -50,9 +35,7 @@ def bar_graph(data, name = "Vizualization of Health"):
 	        color='green',
 	    )
 	)
-
-	print(trace1)
-
+	
 	layout = go.Layout(
 	    title=name,
 	    height=600,
@@ -63,7 +46,7 @@ def bar_graph(data, name = "Vizualization of Health"):
 	    bargroupgap=0.1
 	)
 	fig = go.Figure(data=[trace1], layout=layout)
-	py.plot(fig, filename='Vizualization')
+	ply.plot(fig, filename='Vizualization.html')
 
 
 

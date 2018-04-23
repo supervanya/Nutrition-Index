@@ -1,9 +1,12 @@
 from nutri_fetch import *
 import getpass
 import db
+import sys
+import traceback
 import render
 
-def interractive_get_index(search_term = None, ndbno = None):
+
+def interractive_get_index(search_term = None, ndbno = None, user_id=0):
     # getting the id of the food of interest
     if search_term == None and ndbno == None:
         ndbnos_list = None
@@ -22,6 +25,7 @@ def interractive_get_index(search_term = None, ndbno = None):
     data = fetch_nutrition(ndbno)
     name = str(data['name'])
     index = round(data['health_index'])
+    db.save_food(data)
 
     if index > 400:
         emoji = "🤩🤩🤩🌱"
@@ -43,47 +47,67 @@ def interractive_get_index(search_term = None, ndbno = None):
         percent = "|░░░░░░░░|"
 
     helper.print_with_line(texts.hlth_index.format(name,repr(index),percent,emoji), title="Health Index ®", n = 0, ref = True)
-    answer = helper.press_any_key(s =texts.after_index, inp = True)
+    answer = helper.press_any_key(s =texts.after_index, inp = True, n = 0.004)
 
     try:
-        # ndbnos_list[1] - list of NDBNOS returned
         answer = int(answer)
-        print(answer,"got int:")
-        ndbno = ndbnos_list[1][type(answer)-1]
-        print(ndbno)
-        interractive_get_index(ndbno)
+        while True:
+            # ndbnos_list[1] - list of NDBNOS returned
+            print("got int:", answer)
+            print(ndbnos_list)
+            print(ndbnos_list[1])
+            print(ndbnos_list[1][int(answer)-1])
+            ndbno = ndbnos_list[1][int(answer)-1]['ndbno']
+            print(ndbno)
+            interractive_get_index(ndbno=ndbno)
     except:
-        # if user enters log - return 1 as first tuple and data as second tuple
+        # if user enters log - return data as second tuple
         if answer.lower() == "log":
-            print(answer,"got log:")
+            print(answer,"got log:") ########
+            db.log_food(data, user_id)
             return data
         # if user enters exit return 0
-        elif answer.lower() == 'exit':
-            print(answer,"got 'exit':")
-            helper.simple_print(texts.bye)
+        elif answer.lower() == 'back':
+            print(answer,"got 'back':") ########
             return None
+        elif answer.lower() == 'exit':
+            print(answer,"got 'exit':") ########
+            helper.simple_print(texts.bye)
+            sys.exit()
         else:
-            print(answer,"got nothing:")
+            print("got search term:", answer) ########
             # return the search parameter
             interractive_get_index (search_term = answer)
+
 
 def log_in():
     # returns user name after logging in or creating an account
 
     user_name = helper.press_any_key(s ="Enter your username: " )
     user_name = user_name[0].upper()+user_name[1:]
-    password = db.fetch_password(user_name)
+    password_encrypted = db.fetch_password(user_name)
 
-    if password:
+    if password_encrypted:
         helper.print_with_line(texts.password_existing.format(user_name), 
         title="Log in", n = 0, ref = True)
-        real_password = list(password)[0]
+        real_password = db.decrypt(password_encrypted[0])
         # print(real_password)
         helper.press_any_key(s ="Enter your ", inp = False)
         password_entered = getpass.getpass()
+        n = 3
         while password_entered != real_password:
-            helper.press_any_key(s ="Wrong pass, try again? ", inp = False)
+            if n == 0:
+                helper.simple_print("☠ RIP! Sorry, take a break, you might remember it later! ︎")
+                helper.pause(2)
+                helper.simple_print(texts.bye)
+                sys.exit()
+            n-=1
+            helper.press_any_key(s ="⚠︎ Wrong pass, {} more try(-ies) > ".format(n+1), inp = False)
             password_entered = getpass.getpass()
+
+        
+
+
         helper.print_with_line("{} you are logged in!".format(user_name), 
             title="Success!", n = 0, ref = True)
         helper.pause()
@@ -117,34 +141,51 @@ def main():
     user_name   = log_in()
     user_id     = db.get_user_id(user_name)
     while True:
-        helper.print_with_line(texts.menu, ref=False)
+        helper.print_with_line(texts.menu, ref=True, n=0, title="Main menu")
         answer = helper.press_any_key(s ="Enter your choice\n> ", inp = True)
         try:
             if answer == '1':
                 data    = interractive_get_index()
-                if data:
-                    db.log_food(data, user_id)
+                print(data)
+
             elif answer == '2':
-                ndbno = input("Enter food's NDBNO or select from Favorites:\n> ")
-                data = nutri_fetch.fetch_nutrition(ndbno)
-                print(data, user_id)
+                db.fetch_nutrient(user_id = user_id, nutrients = ['ndbno','name'],limit = 15, printing = True)
+                print("here is your most recent 15 entrees")
+                ndbno = input("Enter food's NDBNO if you know or look it up in main menu:\n> ")
+                data = fetch_nutrition(ndbno)
                 db.log_food(data, user_id)
+
             elif answer == '3':
-                helper.print_with_line(texts.vizualization_3)
+                helper.print_with_line(texts.vizualization_3, ref=True, n=30, title="Vizualization")
                 sub_choice = helper.press_any_key(s ="Enter your choice > ", inp = True)
                 if sub_choice == '1':
-                    indexes = db.fetch_nutrient(user_id, nutrients = ['Index']) 
+                    indexes = db.fetch_nutrient(user_id, nutrients = ['269']) 
                     render.bar_graph(indexes, name = "Health Index over Time")
                 elif sub_choice == '2':
-                    sugar   = db.fetch_nutrient(user_id, nutrients = ['269']) 
+                    sugar   = db.fetch_nutrient(user_id, nutrients = ['Index']) 
                     render.bar_graph(sugar, name = "Sugar Graph over Time")
                 elif sub_choice == '3':
-                    data   = db.fetch_nutrient(user_id, nutrients = ['269', 'Index']) 
+                    data   = db.fetch_nutrient(user_id, nutrients = ['269', 'Index'])
+                    print(data)
                     render.bar_graph(data)
+
             elif answer == 'exit':
                 helper.simple_print(texts.bye)
                 break
-        except:
+            else:
+                print("error #3")
+                helper.print_with_line(texts.error.format(answer), ref = False)
+                helper.pause(3)
+
+        except Exception as err:
+            exc_info = sys.exc_info()
+            traceback.print_exception(*exc_info)
+            del exc_info
+
+            print(err)
+            print("error #4")
+            helper.print_with_line(texts.fatal_error, ref = False)
+            helper.pause(3)    
             continue
 
     # show options to chose from (USE Twitter's template)
