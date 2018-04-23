@@ -8,6 +8,10 @@ This software allows user to find out how healthy any food product is.
 ### Long Description
 For my project I implemented a software enabling user to look up any foods and get an indepth insights on how healthy foods are.I developped a normalized "Health Index" for foods that takes into account Macro and Micro nutrients of given food product. Index is a number that can be used to evaluate how healthy a food is and compare it with other foods.
 
+
+
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -30,11 +34,18 @@ python3 interractive.py
 ```
 Follow instructions on screen
 
+
+
 ## Authors
 * **Vanya Prokopovich** - [supervanya](https://github.com/supervanya)
 
+
+
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
+
 
 
 ## Acknowledgments
