@@ -2,24 +2,39 @@
   This is the final project for class:
   SI206 class (Data-oriented programming)
 
-A software that allows to find out how healthy any food is.
+### Short Description
+This software allows user to find out how healthy any food product is.
 
-For my project I implemented a software enabling user to look up any foods and get an indepth insights on how healthy foods are.
-I developped a normalized "Health Index" for foods that takes into account Macro and Micro nutrients of given food product. 
-Index is a number that can be used to evaluate how healthy a food is and compare it with other foods.
+### Long Description
+For my project I implemented a software enabling user to look up any foods and get an indepth insights on how healthy foods are.I developped a normalized "Health Index" for foods that takes into account Macro and Micro nutrients of given food product. Index is a number that can be used to evaluate how healthy a food is and compare it with other foods.
 
 ## Getting Started
 
 ### Prerequisites
-Python version used 3.6.4
-Use requirements.txt to set up the virtual environment or intall missing modules manually.
+Python version used **3.6.4** (any version above 3 will be good)
+Use requirements.txt to set up the virtual environment or intall missing modules manually (pip install for example).
+
+Here are the only non-standard libraries used:
+```
+requests
+plotly
+flask
+```
+
+### Running
+![Runing the program](Nutri-Index_online.gif)
+
+Run the interractive.py file in the cmd or terminal
+```
+python3 interractive.py
+```
+Follow instructions on screen
 
 ## Authors
 * **Vanya Prokopovich** - [supervanya](https://github.com/supervanya)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
 
 
 ## Acknowledgments
