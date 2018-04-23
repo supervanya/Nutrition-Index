@@ -2,7 +2,6 @@ nutrition/
 __*__
 *.json
 .DS_Store
-secrets.py
 out*
 *.pyc
 __pycache__
