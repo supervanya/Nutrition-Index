@@ -48,7 +48,8 @@ def bar_graph(data, name = "Vizualization of Health"):
 	fig = go.Figure(data=[trace1], layout=layout)
 	ply.plot(fig, filename='Vizualization.html')
 
-
+def bar_graph_multiple():
+	for data in 
 
 
 d = {'203': {'name': 'Protein', 'unit': 'g', 'value': 2.92},
