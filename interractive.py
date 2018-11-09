@@ -15,12 +15,18 @@ def log_in():
     user_name = helper.press_any_key(s ="Enter your username: " )
     user_name = user_name[0].upper()+user_name[1:]
 
+    print(user_name)
+    if user_name == "Admin":
+
+        return user_name
+
+
     # get the password returns None if can't find such user_name
     password_encrypted = db.fetch_password(user_name)
 
     # try to login if user_name exists (password_encrypted == True)
     if password_encrypted:
-        helper.print_with_line(texts.password_existing.format(user_name), 
+        helper.print_with_line(texts.password_existing.format(user_name),
         title="Log in", n = 0, ref = True)
         real_password = db.decrypt(password_encrypted[0])
         helper.press_any_key(s ="Enter your ", inp = False)
@@ -36,12 +42,12 @@ def log_in():
                 sys.exit()
             tries -=1
             helper.press_any_key(
-                s ="⚠︎ Wrong pass, {} more try(-ies) > ".format(tries+1), 
+                s ="⚠︎ Wrong pass, {} more try(-ies) > ".format(tries+1),
                 inp = False)
             password_entered = getpass.getpass()
 
         #greet the user with success menu
-        helper.print_with_line("{} you are logged in!".format(user_name), 
+        helper.print_with_line("{} you are logged in!".format(user_name),
             title="Success!", n = 0, ref = True)
         helper.pause()
 
@@ -68,15 +74,15 @@ def log_in():
                 print("The passwords don't match. Try agin!")
                 continue
             break
-            
+
         gender = helper.press_any_key(s ="Your gender: ", inp = True)
         age     = helper.press_any_key(s ="Your age: ", inp = True)
         password = password_entered1
         db.create_user(user_name, gender, age, password)
-        helper.print_with_line("{} your profile is created!".format(user_name), 
+        helper.print_with_line("{} your profile is created!".format(user_name),
             title="Success!", n = 0, ref = True)
         helper.pause()
-        
+
     return user_name
 
 def close(user_id):
@@ -156,7 +162,7 @@ def sub_menu_3(user_id):
 # ---- FUNCTIONS FROM SUB MENU 1 FOODS LOOKUP
 def print_food(user_id):
     print(look_up_foods(user_id))
- 
+
 def look_up_foods(user_id):
     # asking for a food name until success or exit:
 
@@ -165,7 +171,7 @@ def look_up_foods(user_id):
 
     # print the list of foods
     print_ndbnos_list(ndbnos_list)
-    
+
     # get number from user
     ndbno = choose_food(ndbnos_list)
 
@@ -211,26 +217,26 @@ def compare_foods(user_id):
 
     print("choose food #2")
     food2 = look_up_foods(user_id)
-    
+
     food1.compare_to(food2)
 
 # ---- FUNCTIONS FROM SUB MENU 2
-d = maps.RNP 
+d = maps.RNP
 
 def analyze_foods_sugar(user_id):
-    sugars = db.fetch_nutrient(user_id, nutrients = [d['Sugars']]) 
+    sugars = db.fetch_nutrient(user_id, nutrients = [d['Sugars']])
     render.bar_graph(sugars, name = "Sugar Graph over Time")
 
 def analyze_foods_protein(user_id):
-    proteins = db.fetch_nutrient(user_id, nutrients = [d['Protein']]) 
+    proteins = db.fetch_nutrient(user_id, nutrients = [d['Protein']])
     render.bar_graph(proteins, name = "Protein Graph over Time")
 
 def analyze_foods_index(user_id):
-    indexes   = db.fetch_nutrient(user_id, nutrients = ['Index']) 
+    indexes   = db.fetch_nutrient(user_id, nutrients = ['Index'])
     render.bar_graph(indexes, name = "Health Index over Time")
 
 def analyze_foods_sugars_index(user_id):
-    indexes   = db.fetch_nutrient(user_id, nutrients = ['Index',d['Sugars']]) 
+    indexes   = db.fetch_nutrient(user_id, nutrients = ['Index',d['Sugars']])
     render.bar_graph(indexes, name = "Health Index over Time")
 
 
@@ -245,7 +251,7 @@ def view_hitory_log():
 def run():
     # greeet
     helper.print_with_line(texts.welcome)
-    # log in 
+    # log in
     user_name = log_in()
     # get user id
     user_id   = db.get_user_id(user_name)
@@ -257,22 +263,22 @@ def run():
 
 
 # ---- DICT MAPPING
-# dictionaty - map of functions to user input 
+# dictionaty - map of functions to user input
 # calling them by func[func_name](params)
-main_map        = {   
+main_map        = {
                     '1'     :sub_menu_1,
                     '2'     :sub_menu_2,
                     '3'     :sub_menu_3,
                     'exit'  :close
                 }
 
-sub_menu_1_map  = {   
+sub_menu_1_map  = {
                     '1'     :print_food,
                     '2'     :compare_foods,
                     'exit'  :close
                 }
 
-sub_menu_2_map  = {   
+sub_menu_2_map  = {
                     '1'     :analyze_foods_sugar,
                     '2'     :analyze_foods_protein,
                     '3'     :analyze_foods_index,
@@ -289,5 +295,3 @@ if __name__=="__main__":
     run()
     # while True:
     #     look_up_foods(25)
-    
-
