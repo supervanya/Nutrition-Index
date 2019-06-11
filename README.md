@@ -18,6 +18,20 @@ For my project I implemented a software enabling user to look up any foods and g
 Python version used **3.6.4** (any version above 3 will be good)
 Use requirements.txt to set up the virtual environment or intall missing modules manually (pip install for example).
 
+### Environment set-up
+
+To make your python environment, run:
+
+```
+python3 -m venv env
+```
+
+Then, run this command to download the dependencies:
+
+```
+pip install -r requirements.txt
+```
+
 Here are the only non-standard libraries used:
 ```
 requests
